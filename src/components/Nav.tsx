@@ -1,10 +1,11 @@
 'use client'
-import { Search, ShoppingCartIcon, User } from 'lucide-react';
+import { Cross, LogOut, Package, Search, SearchCheck, ShoppingCartIcon, User, X } from 'lucide-react';
 import mongoose from 'mongoose';
 import Link from 'next/link';
-import React, { useState } from 'react'
+import React, { useRef, useState,useEffect } from 'react'
 import Image from 'next/image';
 import { AnimatePresence,motion } from 'motion/react';
+import { signOut } from 'next-auth/react';
 
 
 interface IUser{
@@ -18,6 +19,18 @@ interface IUser{
 }
 const Nav = ({user}:{user:IUser}) => {
     const [open,setOpen] = useState(false)
+    const profileDropDown = useRef<HTMLDivElement>(null);
+    const [searchBarOpen,setSearchBarOpen] = useState(false)
+
+    useEffect(() => {
+        const handleClickOutside = (e:MouseEvent) => {
+            if(profileDropDown.current && !profileDropDown.current.contains(e.target as Node)){
+                setOpen(false)
+            }
+        }
+        document.addEventListener("mousedown",handleClickOutside)
+        return () => document.removeEventListener("mousedown",handleClickOutside)
+    },[])
     
   return (
     <div className='w-[95%] fixed top-4 left-1/2 -translate-x-1/2 bg-linear-to-r from-green-500 to-green-700 rounded-2xl shadow-black/30 flex justify-between items-center h-20 px-4 md:px-8 z-50'>
@@ -33,13 +46,23 @@ const Nav = ({user}:{user:IUser}) => {
         </form>
 
         <div className='flex items-center gap-3 md:gap-6 relative'>
+
+
+
+            <div className='bg-white rounded-full w-11 h-11 flex items-center justify-center shadow-md hover:scale-105 transition md:hidden'
+            onClick={() => setSearchBarOpen((prev) => !prev)}
+            >
+                <Search  className='text-green-600 w-6 h-6'/>
+
+            </div>
+
             <Link href={""} className='relative bg-white rounded-full w-11 h-11 flex items-center justify-center shadow-md hover:scale-105 transition'>
             <ShoppingCartIcon className='text-green-600 w-6 h-6'/>
             <span className='absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full font-semibold shadow'>
                 0
             </span>
             </Link>
-            <div className='relative'>
+            <div className='relative' ref={profileDropDown}>
             <div className='bg-white rounded-full w-11 h-11 flex items-center justify-center overflow-hidden shadow-md hover:scale-105 transition-transform'
             onClick={() => setOpen(prev=>!prev)}
             >
@@ -60,7 +83,7 @@ const Nav = ({user}:{user:IUser}) => {
                     scale:1
                   }}
                   transition={{
-                    duration:0.6
+                    duration:0.4
                   }}
                   exit={{opacity:0,
                     y:-10,
@@ -77,8 +100,66 @@ const Nav = ({user}:{user:IUser}) => {
                         <div className='text-xs text-gray-500 capitalize'>{user.role}</div>
                     </div>
                 </div>
+
+                <Link href={""} className='flex items-center gap-2 px-3 py-3 hover:bg-green-50 rounded-lg text-gray-700 font-medium'
+                onClick={() => setOpen(false)}
+                >
+                <Package className='w-5 h-5 text-green-600'/>
+                My Orders
+                </Link>
+
+                <button type='button' className='flex items-center gap-2 w-full text-left px-3 py-3 hover:bg-red-50 rounded-lg text-gray-700 font-medium'
+                onClick={() => {
+                    setOpen(false)
+                    signOut({callbackUrl:"/login"})
+
+                }}
+                >
+                    <LogOut className='w-5 h-5 text-red-600'/>
+                    Logo Out
+                </button>
+
                 </motion.div>
             }
+            </AnimatePresence>
+
+            <AnimatePresence>
+                {
+                    searchBarOpen 
+                    && 
+                    <motion.div
+                    initial={{
+                        opacity: 0,
+                        y: -10,
+                        scale: 0.95
+                    }}
+                    animate={{
+                        opacity: 1,
+                        y: 0,
+                        scale: 1
+                    }}
+                    transition={{
+                        duration: 0.4
+                    }}
+                    exit={{
+                        opacity: 0,
+                        y: -10,
+                        scale: 0.95
+                    }}
+                    className='fixed top-24 left-1/2 -translate-x-1/2 w-[90%] bg-white rounded-full shadow-lg z-40 flex items-center px-4 py-2'
+                    >
+                        <Search className='text-gray-500 w-5 h-5 mr-2'/>
+                        <form className='grow'>
+                            <input type='text' 
+                            placeholder='Search groceries'
+                            className='w-full outline-none text-gray-700' />
+                        </form>
+                        <button aria-label="Close" onClick={() => setSearchBarOpen(false)}>
+                            <X className='text-gray-500 w-5 h-5'/>
+                        </button>
+                    </motion.div> 
+                     
+                }
             </AnimatePresence>
 
             </div>
